@@ -1,17 +1,17 @@
 package rabbitmq
 
 import (
-	"150.fyi/internal/pkg/utils"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/streadway/amqp"
+	"hercules/utils"
 	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
 )
 
-type Client struct {
+type Producer struct {
 	sync.RWMutex
 	conn    map[string]*amqp.Connection
 	channel map[string]*amqp.Channel
@@ -19,7 +19,7 @@ type Client struct {
 	Vhost   []string
 }
 
-func (c *Client) Init() {
+func (c *Producer) Init() {
 	c.Lock()
 	defer c.Unlock()
 	c.conn = make(map[string]*amqp.Connection)
@@ -53,7 +53,7 @@ func (c *Client) Init() {
 }
 
 // 推送消息
-func (c *Client) Publish(body []byte, queue, exchange, expiration, vhost string) error {
+func (c *Producer) Publish(body []byte, queue, exchange, expiration, vhost string) error {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Errorf("recover: %v", string(debug.Stack()))
@@ -70,12 +70,12 @@ func (c *Client) Publish(body []byte, queue, exchange, expiration, vhost string)
 	if err := channel.Confirm(false); err != nil {
 		return err
 	}
-	confirms := channel.NotifyPublish(make(chan amqp.Confirmation, 1))
-	defer func(confirms <-chan amqp.Confirmation) {
-		if confirmed := <-confirms; !confirmed.Ack {
+	confirm := channel.NotifyPublish(make(chan amqp.Confirmation, 1))
+	defer func(confirm <-chan amqp.Confirmation) {
+		if confirmed := <-confirm; !confirmed.Ack {
 			log.Errorf("failed delivery of delivery tag: %v\n", confirmed.DeliveryTag)
 		}
-	}(confirms)
+	}(confirm)
 
 	publishing := amqp.Publishing{
 		ContentType:  "text/plain", //application/json text/plain

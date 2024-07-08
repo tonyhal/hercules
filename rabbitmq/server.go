@@ -1,12 +1,12 @@
 package rabbitmq
 
 import (
-	"150.fyi/internal/pkg/utils"
 	"context"
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/streadway/amqp"
+	"hercules/utils"
 	"strings"
 	"sync"
 )
@@ -33,16 +33,6 @@ func (m *Message) Value() []byte {
 	return m.value
 }
 
-type ReceiverHandle func(context.Context, Message) error
-
-type Receiver struct {
-	ExchangeName string
-	QueueName    string
-	Vhost        string
-	Handle       ReceiverHandle
-	Num          int
-}
-
 type Server struct {
 	sync.RWMutex
 	conn      map[string]*amqp.Connection
@@ -51,8 +41,8 @@ type Server struct {
 	cancel    context.CancelFunc
 	source    string
 	err       error
-	Receivers []Receiver
-	vhost     []string
+	Consumers []Consumer
+	vhosts    []string
 }
 
 // ServerOption is an HTTP 150.fyi option.
@@ -64,9 +54,9 @@ func WithSource(source string) ServerOption {
 	}
 }
 
-func WithVhost(vhost []string) ServerOption {
+func WithVhost(vhosts []string) ServerOption {
 	return func(s *Server) {
-		s.vhost = vhost
+		s.vhosts = vhosts
 	}
 }
 
@@ -94,7 +84,7 @@ func (s *Server) Connect() error {
 	s.Lock()
 	defer s.Unlock()
 
-	for _, vhost := range s.vhost {
+	for _, vhost := range s.vhosts {
 		s.conn[utils.Md5(vhost)], s.err = amqp.Dial(fmt.Sprintf("%s/%s", s.source, strings.Trim(vhost, "/")))
 		if s.err != nil {
 			log.Errorf("failed opening connection to rabbitmq: %v\n", s.err)
@@ -102,7 +92,7 @@ func (s *Server) Connect() error {
 		}
 	}
 
-	log.Infof("successfully connected to rabbitmq.")
+	log.Infof("[%s] connected successfully.", s.Name())
 	return nil
 }
 
@@ -116,65 +106,63 @@ func (s *Server) Start(ctx context.Context) error {
 	s.Lock()
 	defer s.Unlock()
 	s.baseCtx, s.cancel = context.WithCancel(context.Background())
-	for _, receiver := range s.Receivers {
-		vhost := utils.Md5(receiver.Vhost)
-		for i := 0; i < receiver.Num; i++ {
+	for _, consumer := range s.Consumers {
+		vhost := utils.Md5(consumer.Vhost)
+		for i := 0; i < consumer.Fork; i++ {
 			// 获取通道
 			if s.channel[vhost], s.err = s.conn[vhost].Channel(); s.err != nil {
 				break
 			}
 			// 声明队列
-			s.channel[vhost].QueueDeclare(receiver.QueueName, true, false, false, false, amqp.Table{"x-ha-policy": "all"})
+			s.channel[vhost].QueueDeclare(consumer.QueueName, true, false, false, false, amqp.Table{"x-ha-policy": "all"})
 			// 绑定队列
-			s.err = s.channel[vhost].QueueBind(receiver.QueueName, receiver.QueueName, receiver.ExchangeName, true, nil)
+			s.err = s.channel[vhost].QueueBind(consumer.QueueName, consumer.QueueName, consumer.ExchangeName, true, nil)
 			if s.err != nil {
 				break
 			}
 			// 获取消费通道, 确保rabbitMQ一个一个发送消息
 			s.channel[vhost].Qos(1, 0, true)
-			deliveries, err := s.channel[vhost].Consume(receiver.QueueName, "", false, false, false, false, nil)
+			deliveries, err := s.channel[vhost].Consume(consumer.QueueName, "", false, false, false, false, nil)
 			if err != nil {
 				break
 			}
 			// 协程处理
-			go func(ctx context.Context, deliveries <-chan amqp.Delivery, receiver Receiver) {
+			go func(ctx context.Context, deliveries <-chan amqp.Delivery, consumer Consumer) {
 				for {
 					select {
 					case <-ctx.Done():
-						log.Infof("rabbitmq 0376.kim closed.")
+						log.Infof("rabbitmq %s closed.", consumer.QueueName)
 						return
 					case delivery := <-deliveries:
 						// 循环读取消息
-						if err := receiver.Handle(context.Background(), Message{key: receiver.QueueName, value: delivery.Body}); err != nil {
+						if err := consumer.Handle(context.Background(), Message{key: consumer.QueueName, value: delivery.Body}); err != nil {
 							delivery.Nack(false, true)
 						} else {
 							delivery.Ack(false)
 						}
 					}
 				}
-			}(s.baseCtx, deliveries, receiver)
+			}(s.baseCtx, deliveries, consumer)
 		}
 	}
-
 	return s.err
 }
 
 func (s *Server) Stop(ctx context.Context) error {
 	s.cancel()
-	log.Infof("[%s] 150.fyi stopping\n", s.Name())
+	log.Infof("[%s] server stopping", s.Name())
 
-	for _, vhost := range s.vhost {
+	for _, vhost := range s.vhosts {
 		s.conn[utils.Md5(vhost)].Close()
 	}
 
 	return nil
 }
 
-func (s *Server) RegisterReceiver(receiver Receiver) error {
+func (s *Server) AddConsumer(consumer Consumer) error {
 	s.Lock()
 	defer s.Unlock()
 
-	s.Receivers = append(s.Receivers, receiver)
-
+	s.Consumers = append(s.Consumers, consumer)
 	return nil
 }
