@@ -8,7 +8,6 @@ import (
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 	"time"
 )
 
@@ -28,7 +27,7 @@ func NewZapLog(serviceId, serviceName, serviceVersion string) log.Logger {
 	zapLogger := zap.New(
 		zapcore.NewTee(
 			zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel), // 文件
-			zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel),   // console
+			//zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel),   // console
 		),
 	)
 	defer zapLogger.Sync()
