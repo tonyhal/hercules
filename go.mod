@@ -3,7 +3,7 @@ module github.com/tonyhal/hercules
 go 1.20
 
 require (
-	github.com/BurntSushi/toml v1.3.2
+	github.com/BurntSushi/toml v1.4.0
 	github.com/go-kratos/kratos/contrib/log/zap/v2 v2.0.0-20240627104009-3198e0b83bf2
 	github.com/go-kratos/kratos/v2 v2.7.3
 	github.com/go-mysql-org/go-mysql v1.8.0
@@ -11,8 +11,8 @@ require (
 	github.com/pingcap/errors v0.11.5-0.20221009092201-b66cddb77c32
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726
-	github.com/siddontang/go-log v0.0.0-20180807004314-8d05993dda07
-	go.uber.org/zap v1.26.0
+	github.com/siddontang/go-log v0.0.0-20190221022429-1e957dd83bed
+	go.uber.org/zap v1.27.0
 	gorm.io/gorm v1.25.10
 )
 
