@@ -6,7 +6,7 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/rabbitmq/amqp091-go"
-	"hercules/utils"
+	"github.com/tonyhal/hercules/utils"
 	"strings"
 	"sync"
 )
