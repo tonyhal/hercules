@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/rabbitmq/amqp091-go"
-	"hercules/utils"
+	"github.com/tonyhal/hercules/utils"
 	"runtime/debug"
 	"strings"
 	"sync"
