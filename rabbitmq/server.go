@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
-	"github.com/streadway/amqp"
+	"github.com/rabbitmq/amqp091-go"
 	"hercules/utils"
 	"strings"
 	"sync"
@@ -35,8 +35,8 @@ func (m *Message) Value() []byte {
 
 type Server struct {
 	sync.RWMutex
-	conn      map[string]*amqp.Connection
-	channel   map[string]*amqp.Channel
+	conn      map[string]*amqp091.Connection
+	channel   map[string]*amqp091.Channel
 	baseCtx   context.Context
 	cancel    context.CancelFunc
 	source    string
@@ -63,8 +63,8 @@ func WithVhost(vhosts []string) ServerOption {
 func NewServer(opts ...ServerOption) *Server {
 	srv := &Server{
 		baseCtx: context.Background(),
-		conn:    make(map[string]*amqp.Connection),
-		channel: make(map[string]*amqp.Channel),
+		conn:    make(map[string]*amqp091.Connection),
+		channel: make(map[string]*amqp091.Channel),
 	}
 	srv.init(opts...)
 	return srv
@@ -85,7 +85,7 @@ func (s *Server) Connect() error {
 	defer s.Unlock()
 
 	for _, vhost := range s.vhosts {
-		s.conn[utils.Md5(vhost)], s.err = amqp.Dial(fmt.Sprintf("%s/%s", s.source, strings.Trim(vhost, "/")))
+		s.conn[utils.Md5(vhost)], s.err = amqp091.Dial(fmt.Sprintf("%s/%s", s.source, strings.Trim(vhost, "/")))
 		if s.err != nil {
 			log.Errorf("failed opening connection to rabbitmq: %v\n", s.err)
 			return s.err
@@ -114,7 +114,7 @@ func (s *Server) Start(ctx context.Context) error {
 				break
 			}
 			// 声明队列
-			s.channel[vhost].QueueDeclare(consumer.QueueName, true, false, false, false, amqp.Table{"x-ha-policy": "all"})
+			s.channel[vhost].QueueDeclare(consumer.QueueName, true, false, false, false, amqp091.Table{"x-ha-policy": "all"})
 			// 绑定队列
 			s.err = s.channel[vhost].QueueBind(consumer.QueueName, consumer.QueueName, consumer.ExchangeName, true, nil)
 			if s.err != nil {
@@ -127,7 +127,7 @@ func (s *Server) Start(ctx context.Context) error {
 				break
 			}
 			// 协程处理
-			go func(ctx context.Context, deliveries <-chan amqp.Delivery, consumer Consumer) {
+			go func(ctx context.Context, deliveries <-chan amqp091.Delivery, consumer Consumer) {
 				for {
 					select {
 					case <-ctx.Done():

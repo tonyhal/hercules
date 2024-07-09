@@ -3,7 +3,7 @@ package rabbitmq
 import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
-	"github.com/streadway/amqp"
+	"github.com/rabbitmq/amqp091-go"
 	"hercules/utils"
 	"runtime/debug"
 	"strings"
@@ -13,8 +13,8 @@ import (
 
 type Producer struct {
 	sync.RWMutex
-	conn    map[string]*amqp.Connection
-	channel map[string]*amqp.Channel
+	conn    map[string]*amqp091.Connection
+	channel map[string]*amqp091.Channel
 	Source  string
 	Vhost   []string
 }
@@ -22,25 +22,25 @@ type Producer struct {
 func (c *Producer) Init() {
 	c.Lock()
 	defer c.Unlock()
-	c.conn = make(map[string]*amqp.Connection)
-	c.channel = make(map[string]*amqp.Channel)
+	c.conn = make(map[string]*amqp091.Connection)
+	c.channel = make(map[string]*amqp091.Channel)
 
 	var err error
 	for _, vhost := range c.Vhost {
 		// 连接
-		if c.conn[utils.Md5(vhost)], err = amqp.Dial(fmt.Sprintf("%s/%s", c.Source, strings.Trim(vhost, "/"))); err != nil {
+		if c.conn[utils.Md5(vhost)], err = amqp091.Dial(fmt.Sprintf("%s/%s", c.Source, strings.Trim(vhost, "/"))); err != nil {
 			time.AfterFunc(time.Second*3, func() { go c.Init() })
 			return
 		}
 		// 断线重连
-		go func(conn *amqp.Connection) {
+		go func(conn *amqp091.Connection) {
 			defer func() {
 				if err := recover(); err != nil {
 					log.Errorf("%s\n", string(debug.Stack()))
 				}
 			}()
 
-			var chanErr chan *amqp.Error = conn.NotifyClose(make(chan *amqp.Error))
+			var chanErr chan *amqp091.Error = conn.NotifyClose(make(chan *amqp091.Error))
 			select {
 			case _, ok := <-chanErr:
 				if !ok {
@@ -70,22 +70,22 @@ func (c *Producer) Publish(body []byte, queue, exchange, expiration, vhost strin
 	if err := channel.Confirm(false); err != nil {
 		return err
 	}
-	confirm := channel.NotifyPublish(make(chan amqp.Confirmation, 1))
-	defer func(confirm <-chan amqp.Confirmation) {
+	confirm := channel.NotifyPublish(make(chan amqp091.Confirmation, 1))
+	defer func(confirm <-chan amqp091.Confirmation) {
 		if confirmed := <-confirm; !confirmed.Ack {
 			log.Errorf("failed delivery of delivery tag: %v\n", confirmed.DeliveryTag)
 		}
 	}(confirm)
 
-	publishing := amqp.Publishing{
+	publishing := amqp091.Publishing{
 		ContentType:  "text/plain", //application/json text/plain
 		Body:         body,
-		DeliveryMode: amqp.Persistent, // 1=non-persistent, 2=persistent
+		DeliveryMode: amqp091.Persistent, // 1=non-persistent, 2=persistent
 		MessageId:    utils.Md5(string(body)),
 		Timestamp:    time.Now(),
 	}
 	if len(expiration) > 0 && strings.Compare(exchange, "delayed") > 0 {
-		publishing.Headers = amqp.Table{"x-delay": expiration}
+		publishing.Headers = amqp091.Table{"x-delay": expiration}
 	}
 	if err := channel.Publish(
 		exchange, // publish to an exchange
