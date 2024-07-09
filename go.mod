@@ -1,4 +1,4 @@
-module hercules
+module github.com/tonyhal/hercules
 
 go 1.20
 
