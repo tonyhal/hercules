@@ -1,7 +1,6 @@
 package rabbitmq
 
 import (
-	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/tonyhal/hercules/utils"
@@ -13,54 +12,50 @@ import (
 
 type Producer struct {
 	sync.RWMutex
-	conn    map[string]*amqp091.Connection
-	channel map[string]*amqp091.Channel
+
+	conn    *amqp091.Connection
+	channel *amqp091.Channel
 	Source  string
-	Vhost   []string
 }
 
 func (c *Producer) Init() {
 	c.Lock()
 	defer c.Unlock()
-	c.conn = make(map[string]*amqp091.Connection)
-	c.channel = make(map[string]*amqp091.Channel)
 
 	var err error
-	for _, vhost := range c.Vhost {
-		// 连接
-		if c.conn[utils.Md5(vhost)], err = amqp091.Dial(fmt.Sprintf("%s/%s", c.Source, strings.Trim(vhost, "/"))); err != nil {
-			time.AfterFunc(time.Second*3, func() { go c.Init() })
-			return
-		}
-		// 断线重连
-		go func(conn *amqp091.Connection) {
-			defer func() {
-				if err := recover(); err != nil {
-					log.Errorf("%s\n", string(debug.Stack()))
-				}
-			}()
-
-			var chanErr chan *amqp091.Error = conn.NotifyClose(make(chan *amqp091.Error))
-			select {
-			case _, ok := <-chanErr:
-				if !ok {
-				}
-				conn.Close()
-				go c.Init()
-			}
-		}(c.conn[utils.Md5(vhost)])
+	// 连接
+	if c.conn, err = amqp091.Dial(c.Source); err != nil {
+		time.AfterFunc(time.Second*3, func() { go c.Init() })
+		return
 	}
+	// 断线重连
+	go func(conn *amqp091.Connection) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Errorf("%s\n", string(debug.Stack()))
+			}
+		}()
+
+		var chanErr chan *amqp091.Error = conn.NotifyClose(make(chan *amqp091.Error))
+		select {
+		case _, ok := <-chanErr:
+			if !ok {
+			}
+			conn.Close()
+			go c.Init()
+		}
+	}(c.conn)
 }
 
 // 推送消息
-func (c *Producer) Publish(body []byte, queue, exchange, expiration, vhost string) error {
+func (c *Producer) Publish(body []byte, queue, exchange, expiration string) error {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Errorf("recover: %v", string(debug.Stack()))
 		}
 	}()
 
-	channel, err := c.conn[utils.Md5(vhost)].Channel()
+	channel, err := c.conn.Channel()
 	if err != nil {
 		return err
 	}

@@ -2,12 +2,10 @@ package rabbitmq
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/tonyhal/hercules/utils"
-	"strings"
 	"sync"
 )
 
@@ -35,28 +33,24 @@ func (m *Message) Value() []byte {
 
 type Server struct {
 	sync.RWMutex
-	conn      map[string]*amqp091.Connection
-	channel   map[string]*amqp091.Channel
-	baseCtx   context.Context
-	cancel    context.CancelFunc
-	source    string
-	err       error
+
+	conn    map[string]*amqp091.Connection
+	channel map[string]*amqp091.Channel
+
+	baseCtx context.Context
+	cancel  context.CancelFunc
+	source  map[string]string
+	err     error
+
 	Consumers []Consumer
-	vhosts    []string
 }
 
 // ServerOption is an HTTP 150.fyi option.
 type ServerOption func(*Server)
 
-func WithSource(source string) ServerOption {
+func WithSource(source map[string]string) ServerOption {
 	return func(s *Server) {
 		s.source = source
-	}
-}
-
-func WithVhost(vhosts []string) ServerOption {
-	return func(s *Server) {
-		s.vhosts = vhosts
 	}
 }
 
@@ -84,8 +78,8 @@ func (s *Server) Connect() error {
 	s.Lock()
 	defer s.Unlock()
 
-	for _, vhost := range s.vhosts {
-		s.conn[utils.Md5(vhost)], s.err = amqp091.Dial(fmt.Sprintf("%s/%s", s.source, strings.Trim(vhost, "/")))
+	for identity, source := range s.source {
+		s.conn[utils.Md5(identity)], s.err = amqp091.Dial(source)
 		if s.err != nil {
 			log.Errorf("failed opening connection to rabbitmq: %v\n", s.err)
 			return s.err
@@ -107,22 +101,22 @@ func (s *Server) Start(ctx context.Context) error {
 	defer s.Unlock()
 	s.baseCtx, s.cancel = context.WithCancel(context.Background())
 	for _, consumer := range s.Consumers {
-		vhost := utils.Md5(consumer.Vhost)
+		identity := utils.Md5(consumer.Identity)
 		for i := 0; i < consumer.Fork; i++ {
 			// 获取通道
-			if s.channel[vhost], s.err = s.conn[vhost].Channel(); s.err != nil {
+			if s.channel[identity], s.err = s.conn[identity].Channel(); s.err != nil {
 				break
 			}
 			// 声明队列
-			s.channel[vhost].QueueDeclare(consumer.QueueName, true, false, false, false, amqp091.Table{"x-ha-policy": "all"})
+			s.channel[identity].QueueDeclare(consumer.Queue, true, false, false, false, amqp091.Table{"x-ha-policy": "all"})
 			// 绑定队列
-			s.err = s.channel[vhost].QueueBind(consumer.QueueName, consumer.QueueName, consumer.ExchangeName, true, nil)
+			s.err = s.channel[identity].QueueBind(consumer.Queue, consumer.Queue, consumer.Exchange, true, nil)
 			if s.err != nil {
 				break
 			}
 			// 获取消费通道, 确保rabbitMQ一个一个发送消息
-			s.channel[vhost].Qos(1, 0, true)
-			deliveries, err := s.channel[vhost].Consume(consumer.QueueName, "", false, false, false, false, nil)
+			s.channel[identity].Qos(1, 0, true)
+			deliveries, err := s.channel[identity].Consume(consumer.Queue, "", false, false, false, false, nil)
 			if err != nil {
 				break
 			}
@@ -131,11 +125,11 @@ func (s *Server) Start(ctx context.Context) error {
 				for {
 					select {
 					case <-ctx.Done():
-						log.Infof("rabbitmq %s closed.", consumer.QueueName)
+						log.Infof("rabbitmq %s closed.", consumer.Queue)
 						return
 					case delivery := <-deliveries:
 						// 循环读取消息
-						if err := consumer.Handle(context.Background(), Message{key: consumer.QueueName, value: delivery.Body}); err != nil {
+						if err := consumer.Handle(context.Background(), Message{key: consumer.Queue, value: delivery.Body}); err != nil {
 							delivery.Nack(false, true)
 						} else {
 							delivery.Ack(false)
@@ -150,12 +144,17 @@ func (s *Server) Start(ctx context.Context) error {
 
 func (s *Server) Stop(ctx context.Context) error {
 	s.cancel()
-	log.Infof("[%s] server stopping", s.Name())
 
-	for _, vhost := range s.vhosts {
-		s.conn[utils.Md5(vhost)].Close()
+	// 关闭通道
+	for _, channel := range s.channel {
+		channel.Close()
+	}
+	// 关闭链接
+	for _, conn := range s.conn {
+		conn.Close()
 	}
 
+	log.Infof("[%s] server stopping", s.Name())
 	return nil
 }
 
