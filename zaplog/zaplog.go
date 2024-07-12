@@ -16,9 +16,10 @@ func NewZapLog(serviceId, serviceName, serviceVersion string) log.Logger {
 	lumberjackLogger := &lumberjack.Logger{
 		Filename:   fmt.Sprintf("./logs/%s.log", serviceName),
 		MaxSize:    500, // megabytes
-		MaxBackups: 30,
-		MaxAge:     7,    //days
-		Compress:   true, // disabled by default
+		MaxBackups: 10,
+		MaxAge:     7,     //days
+		Compress:   false, // 禁用压缩
+		LocalTime:  true,  // 使用本地时间作为文件名的时间戳
 	}
 	defer lumberjackLogger.Close()
 
