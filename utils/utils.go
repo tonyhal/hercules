@@ -161,20 +161,27 @@ func InSortedArray(arr []int, target int) bool {
 	return index < len(arr) && arr[index] == target
 }
 
+// 通过user-agent获取设备操作系统版本
 func GetDeviceOSVersionFromUserAgent(ua string) string {
 	if strings.Contains(ua, "Android") {
 		re := regexp.MustCompile(`(?i)Android ([\d.]{1,})`)
 		version := re.FindStringSubmatch(ua)
-		return "Android " + version[1]
+		if len(version) > 1 {
+			return "Android " + version[1]
+		}
+
 	} else if strings.Contains(ua, "iPhone") {
 		re := regexp.MustCompile(`(?i)CPU iPhone OS ([\d_]{1,})`)
 		version := re.FindStringSubmatch(ua)
-		return "iOS " + strings.Replace(version[1], "_", ".", -1)
+		if len(version) > 1 {
+			return "iOS " + strings.Replace(version[1], "_", ".", -1)
+		}
 	} else if strings.Contains(ua, "iPad") {
 		re := regexp.MustCompile(`(?i)CPU OS ([\d_]{1,})`)
 		version := re.FindStringSubmatch(ua)
-		return "iOS " + strings.Replace(version[1], "_", ".", -1)
-	} else {
-		return "unknown"
+		if len(version) > 1 {
+			return "iOS " + strings.Replace(version[1], "_", ".", -1)
+		}
 	}
+	return "unknown"
 }
