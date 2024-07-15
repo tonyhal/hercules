@@ -1,6 +1,6 @@
 # go-kratos 
 
-# binlog 
+# MySQL binlog 
 
 # rabbitmq 
 
