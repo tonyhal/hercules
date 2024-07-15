@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"regexp"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -158,4 +159,22 @@ func RemoveRepeatedElement(arr []string) (newArr []string) {
 func InSortedArray(arr []int, target int) bool {
 	index := sort.SearchInts(arr, target)
 	return index < len(arr) && arr[index] == target
+}
+
+func GetDeviceOSVersionFromUserAgent(ua string) string {
+	if strings.Contains(ua, "Android") {
+		re := regexp.MustCompile(`(?i)Android ([\d.]{1,})`)
+		version := re.FindStringSubmatch(ua)
+		return "Android " + version[1]
+	} else if strings.Contains(ua, "iPhone") {
+		re := regexp.MustCompile(`(?i)CPU iPhone OS ([\d_]{1,})`)
+		version := re.FindStringSubmatch(ua)
+		return "iOS " + strings.Replace(version[1], "_", ".", -1)
+	} else if strings.Contains(ua, "iPad") {
+		re := regexp.MustCompile(`(?i)CPU OS ([\d_]{1,})`)
+		version := re.FindStringSubmatch(ua)
+		return "iOS " + strings.Replace(version[1], "_", ".", -1)
+	} else {
+		return "unknown"
+	}
 }
