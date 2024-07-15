@@ -15,7 +15,7 @@ func NewZapLog(serviceId, serviceName, serviceVersion string) log.Logger {
 	// 分割日志文件
 	lumberjackLogger := &lumberjack.Logger{
 		Filename:   fmt.Sprintf("./logs/%s.log", serviceName),
-		MaxSize:    5, // megabytes
+		MaxSize:    500, // megabytes
 		MaxBackups: 10,
 		MaxAge:     7,     //days
 		Compress:   false, // 禁用压缩
