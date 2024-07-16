@@ -25,12 +25,15 @@ func NewZapLog(serviceId, serviceName, serviceVersion string) log.Logger {
 
 	zapConfig := zap.NewProductionEncoderConfig()
 	zapConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.DateTime)
-	zapLogger := zap.New(
-		zapcore.NewTee(
-			zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel), // 文件
-			//zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel),   // console
-		),
-	)
+
+	zapCores := make([]zapcore.Core, 0)
+
+	// 文件
+	zapCores = append(zapCores, zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel))
+
+	// zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel),   // console
+
+	zapLogger := zap.New(zapcore.NewTee(zapCores...))
 	defer zapLogger.Sync()
 
 	return log.With(zapLog.NewLogger(zapLogger),
