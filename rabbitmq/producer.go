@@ -19,8 +19,8 @@ type Producer struct {
 }
 
 func (c *Producer) Init() {
-	c.Lock()
-	defer c.Unlock()
+	c.RLock()
+	defer c.RUnlock()
 
 	var err error
 	// 连接

@@ -75,8 +75,8 @@ func (s *Server) Name() string {
 }
 
 func (s *Server) Connect() error {
-	s.Lock()
-	defer s.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 
 	for identity, source := range s.source {
 		s.conn[utils.Md5(identity)], s.err = amqp091.Dial(source)
@@ -91,14 +91,15 @@ func (s *Server) Connect() error {
 }
 
 func (s *Server) Start(ctx context.Context) error {
+	s.RLock()
+	defer s.RUnlock()
+
 	s.err = s.Connect()
 	if s.err != nil {
 		log.Error(s.err)
 		return s.err
 	}
 
-	s.Lock()
-	defer s.Unlock()
 	s.baseCtx, s.cancel = context.WithCancel(context.Background())
 	for _, consumer := range s.Consumers {
 		identity := utils.Md5(consumer.Identity)
@@ -159,8 +160,8 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) AddConsumer(consumer Consumer) error {
-	s.Lock()
-	defer s.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 
 	s.Consumers = append(s.Consumers, consumer)
 	return nil
