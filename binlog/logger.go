@@ -50,9 +50,7 @@ func LogFatalf(format string, args ...interface{}) {
 	_ = log.GetLogger().Log(log.LevelFatal, logKey, fmt.Sprintf(format, args...))
 }
 
-///
 /// logger
-///
 
 type logger struct {
 	level log.Level
@@ -115,9 +113,11 @@ func (l *logger) Warnln(args ...interface{}) {
 func (l *logger) Fatal(args ...interface{}) {
 	LogFatal(args...)
 }
+
 func (l *logger) Fatalf(format string, args ...interface{}) {
 	LogFatalf(format, args...)
 }
+
 func (l *logger) Fatalln(args ...interface{}) {
 	LogFatal(args...)
 }
@@ -125,9 +125,11 @@ func (l *logger) Fatalln(args ...interface{}) {
 func (l *logger) Panic(args ...interface{}) {
 	LogError(args...)
 }
+
 func (l *logger) Panicf(format string, args ...interface{}) {
 	LogErrorf(format, args...)
 }
+
 func (l *logger) Panicln(args ...interface{}) {
 	LogError(args...)
 }
@@ -135,9 +137,11 @@ func (l *logger) Panicln(args ...interface{}) {
 func (l *logger) Print(args ...interface{}) {
 	LogInfo(args...)
 }
+
 func (l *logger) Printf(format string, args ...interface{}) {
 	LogInfof(format, args...)
 }
+
 func (l *logger) Println(args ...interface{}) {
 	LogInfo(args...)
 }
