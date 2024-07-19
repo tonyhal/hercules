@@ -50,8 +50,7 @@ func LogFatalf(format string, args ...interface{}) {
 	_ = log.GetLogger().Log(log.LevelFatal, logKey, fmt.Sprintf(format, args...))
 }
 
-/// logger
-
+// logger
 type logger struct {
 	level log.Level
 }
