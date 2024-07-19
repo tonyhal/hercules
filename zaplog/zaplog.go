@@ -29,9 +29,10 @@ func NewZapLog(serviceId, serviceName, serviceVersion string) log.Logger {
 	zapCores := make([]zapcore.Core, 0)
 
 	// 文件
-	zapCores = append(zapCores, zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel))
+	//zapCores = append(zapCores, zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel))
+	zapCores = append(zapCores, zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel))
 
-	// zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel),   // console
+	//zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel),   // console
 
 	zapLogger := zap.New(zapcore.NewTee(zapCores...))
 	defer zapLogger.Sync()
