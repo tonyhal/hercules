@@ -33,15 +33,19 @@ var _ logger.Interface = (*GormLogger)(nil)
 func (l *GormLogger) LogMode(lev logger.LogLevel) logger.Interface {
 	return &GormLogger{}
 }
+
 func (l *GormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
 	log.Context(ctx).Infof(msg, data)
 }
+
 func (l *GormLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
 	log.Context(ctx).Errorf(msg, data)
 }
+
 func (l *GormLogger) Error(ctx context.Context, msg string, data ...interface{}) {
 	log.Context(ctx).Errorf(msg, data)
 }
+
 func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql string, rowsAffected int64), err error) {
 	// 获取运行时间
 	elapsed := time.Since(begin)
@@ -55,5 +59,4 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 	if l.SlowThreshold != 0 && elapsed > l.SlowThreshold {
 		log.Context(ctx).Warn("Database Slow Log, | sql=%v, rows=%v, elapsed=%v", sql, rows, elapsed)
 	}
-
 }
