@@ -32,7 +32,7 @@ func NewZapLog(serviceId, serviceName, serviceVersion string, maxBackups, maxAge
 	core := zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel)
 	if mode == "release" {
 		// 输出到文件
-		zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel)
+		zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel)
 	}
 
 	zapLogger := zap.New(zapcore.NewTee(core))
