@@ -29,7 +29,7 @@ func NewZapLog(serviceId, serviceName, serviceVersion string, maxBackups, maxAge
 	zapConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.DateTime)
 
 	// console
-	core := zapcore.NewCore(zapcore.NewConsoleEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel)
+	core := zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.Lock(os.Stdout), zapcore.DebugLevel)
 	if mode == "release" {
 		// 输出到文件
 		core = zapcore.NewCore(zapcore.NewJSONEncoder(zapConfig), zapcore.AddSync(lumberjackLogger), zap.InfoLevel)
