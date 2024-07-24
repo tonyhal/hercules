@@ -1,6 +1,7 @@
 package binlog
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-mysql-org/go-mysql/canal"
 	"github.com/go-mysql-org/go-mysql/mysql"
@@ -18,6 +19,7 @@ type bulkRequest struct {
 	Record string
 	Table  string
 	Action string
+	Values string
 }
 
 type event struct {
@@ -41,13 +43,30 @@ func (e *event) OnXID(eventHeader *replication.EventHeader, nextPos mysql.Positi
 }
 
 func (e *event) OnRow(rowsEvent *canal.RowsEvent) error {
-	// 更新会有两条记录，暂时只取一条
+
 	for k, v := range rowsEvent.Rows {
-		if k%2 == 1 && rowsEvent.Action == canal.UpdateAction {
+		// 更新会有两条记录，暂时只取更新后的那条数据
+		if rowsEvent.Action == canal.UpdateAction && k%2 == 0 {
 			continue
 		}
-		e.srv.syncCh <- bulkRequest{Record: fmt.Sprintf("%v", reflect.ValueOf(v[0])), Table: rowsEvent.Table.Name, Action: rowsEvent.Action}
+
+		// 识别列对应值
+		values := make(map[string]interface{}, 0)
+		for _, column := range rowsEvent.Table.Columns {
+			value, _ := rowsEvent.Table.GetColumnValue(column.Name, v)
+			values[column.Name] = value
+		}
+
+		// 转发给方法处理
+		valuesJson, _ := json.Marshal(values)
+		e.srv.syncCh <- bulkRequest{
+			Record: fmt.Sprintf("%v", reflect.ValueOf(v[0])),
+			Table:  rowsEvent.Table.Name,
+			Action: rowsEvent.Action,
+			Values: string(valuesJson),
+		}
 	}
+
 	return e.srv.ctx.Err()
 }
 
