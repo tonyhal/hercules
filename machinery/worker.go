@@ -30,10 +30,10 @@ func NewTaskCenter(opts ...TaskCenterOption) *machinery.Server {
 			DefaultQueue:    "tasks.machinery.direct",
 			ResultsExpireIn: 7 * 86400,
 			AMQP: &machineryConfig.AMQPConfig{
-				Exchange:     "machinery.direct",
-				ExchangeType: "direct",
-				BindingKey:   "tasks.machinery.direct",
-				//PrefetchCount: 0, // 队列同时，消费多少个
+				Exchange:      "machinery.direct",
+				ExchangeType:  "direct",
+				BindingKey:    "tasks.machinery.direct",
+				PrefetchCount: 150, // 队列同时，消费多少个
 			},
 			Redis: &machineryConfig.RedisConfig{
 				MaxIdle:        3,
