@@ -6,6 +6,7 @@ import (
 	machineryLog "github.com/RichardKnop/machinery/v2/log"
 	"sync"
 
+	ifaceBackend "github.com/RichardKnop/machinery/v2/backends/iface"
 	redisbackend "github.com/RichardKnop/machinery/v2/backends/redis"
 	amqpbroker "github.com/RichardKnop/machinery/v2/brokers/amqp"
 	machineryConfig "github.com/RichardKnop/machinery/v2/config"
@@ -51,10 +52,12 @@ func NewTaskCenter(opts ...TaskCenterOption) *machinery.Server {
 	// 自定义日志
 	machineryLog.Set(newLogger())
 
+	var backend ifaceBackend.Backend
+	redisbackend.NewGR(tc.cfg, []string{tc.resultBackendOption.Addr}, tc.resultBackendOption.Db)
 	// Create server instance
 	server := machinery.NewServer(tc.cfg,
 		amqpbroker.New(tc.cfg),
-		redisbackend.NewGR(tc.cfg, []string{tc.resultBackendOption.Addr}, tc.resultBackendOption.Db),
+		backend,
 		eagerlock.New(),
 	)
 	// 注册任务
