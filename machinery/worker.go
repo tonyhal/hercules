@@ -32,7 +32,7 @@ func NewTaskCenter(opts ...TaskCenterOption) *machinery.Server {
 				Exchange:      "machinery.direct",
 				ExchangeType:  "direct",
 				BindingKey:    "tasks.machinery.direct",
-				PrefetchCount: 500, // 队列同时，消费多少个
+				PrefetchCount: 1000, // 队列同时，消费多少个
 			},
 			Redis: &machineryConfig.RedisConfig{
 				MaxIdle:        3,
