@@ -3,8 +3,10 @@ package gormlog
 import (
 	"context"
 	"github.com/go-kratos/kratos/v2/log"
+	"gorm.io/gorm"
 	"time"
 
+	"errors"
 	"gorm.io/gorm/logger"
 )
 
@@ -24,7 +26,6 @@ type GormLogger struct {
 func NewGormLogger() *GormLogger {
 	return &GormLogger{
 		SlowThreshold: 200 * time.Millisecond, // 一般超过200毫秒就算慢查所以不使用配置进行更改
-
 	}
 }
 
@@ -52,7 +53,7 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 	// 获取 SQL 语句和返回条数
 	sql, rows := fc()
 	// Gorm 错误时打印
-	if err != nil {
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Context(ctx).Errorf("SQL ERROR, | sql=%v, rows=%v, elapsed=%v", sql, rows, elapsed)
 	}
 	// 慢查询日志
