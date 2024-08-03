@@ -23,8 +23,7 @@ type GormLogger struct {
 
 func NewGormLogger() *GormLogger {
 	return &GormLogger{
-		SlowThreshold: 200 * time.Millisecond, // 一般超过200毫秒就算慢查所以不使用配置进行更改
-
+		SlowThreshold: 900 * time.Millisecond, // 一般超过200毫秒就算慢查所以不使用配置进行更改
 	}
 }
 
