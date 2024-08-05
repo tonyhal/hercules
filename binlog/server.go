@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
-	"strings"
 	"sync"
 )
 
@@ -120,7 +119,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 	s.ctx = ctx
 
 	// 加载binlog文件同步点
-	filePath, _ := filepath.Abs(fmt.Sprintf("./%s", strings.Trim(s.conf.filepath, "/")))
+	filePath, _ := filepath.Abs(s.conf.filepath)
 	if s.master, err = loadMasterInfo(filePath); err != nil {
 		return errors.Trace(err)
 	}
