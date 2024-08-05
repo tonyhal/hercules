@@ -11,18 +11,20 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"strings"
 	"sync"
 )
 
 var _ transport.Server = (*Server)(nil)
 
 type config struct {
-	host    string
-	user    string
-	passwd  string
-	charset string
-	db      string
-	port    int64
+	host     string
+	user     string
+	passwd   string
+	charset  string
+	db       string
+	port     int64
+	filepath string
 }
 
 type Server struct {
@@ -43,9 +45,9 @@ type handler struct {
 
 type ServerOption func(*Server)
 
-func WithConfig(host, user, passwd, charset, db string, port int64) ServerOption {
+func WithConfig(host, user, passwd, charset, db string, port int64, filepath string) ServerOption {
 	return func(s *Server) {
-		s.conf = &config{host: host, user: user, passwd: passwd, charset: charset, db: db, port: port}
+		s.conf = &config{host: host, user: user, passwd: passwd, charset: charset, db: db, port: port, filepath: filepath}
 	}
 }
 
@@ -118,7 +120,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 	s.ctx = ctx
 
 	// 加载binlog文件同步点
-	filePath, _ := filepath.Abs("./")
+	filePath, _ := filepath.Abs(fmt.Sprintf("./%s", strings.Trim(s.conf.filepath, "/")))
 	if s.master, err = loadMasterInfo(filePath); err != nil {
 		return errors.Trace(err)
 	}
