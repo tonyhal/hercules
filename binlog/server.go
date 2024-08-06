@@ -79,6 +79,7 @@ func (s *Server) Run() error {
 		return errors.Trace(err)
 	}
 	if err := s.canal.StartFromGTID(gtidSet); err != nil {
+
 		return errors.Trace(err)
 	}
 
@@ -153,10 +154,9 @@ func (s *Server) Start(ctx context.Context) (err error) {
 func (s *Server) Stop(_ context.Context) error {
 	defer log.Infof("[%s] server stopping\n", s.Name())
 
+	s.master.Close()
 	s.cancel()
 	s.canal.Close()
-	s.master.Close()
-	s.wg.Wait()
 
 	return nil
 }

@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/rabbitmq/amqp091-go"
+
 	"github.com/tonyhal/hercules/utils"
 	"runtime/debug"
 	"strings"
