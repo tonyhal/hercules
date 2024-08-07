@@ -61,13 +61,13 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}
 	s.cron.Start()
-	log.Infof("Crontab started successfully.")
+	log.Infof("[%s] server stopping.", s.Name())
 	return nil
 }
 
 func (s *Server) Stop(_ context.Context) error {
 	s.cron.Stop()
-	log.Infof("Crontab server closed.")
+	log.Infof("[%s] server closed.", s.Name())
 	return nil
 }
 

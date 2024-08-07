@@ -86,7 +86,7 @@ func (s *Server) Connect() error {
 		}
 	}
 
-	log.Infof("[%s] connected successfully.", s.Name())
+	log.Infof("[%s] server stopping.", s.Name())
 	return nil
 }
 

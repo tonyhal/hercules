@@ -152,7 +152,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 }
 
 func (s *Server) Stop(_ context.Context) error {
-	defer log.Infof("[%s] server stopping\n", s.Name())
+	defer log.Infof("[%s] server stopping.", s.Name())
 
 	s.master.Close()
 	s.cancel()
