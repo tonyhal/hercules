@@ -61,7 +61,7 @@ func (s *Server) Start(ctx context.Context) error {
 		}
 	}
 	s.cron.Start()
-	log.Infof("[%s] server stopping.", s.Name())
+	log.Infof("[%s] server starting.", s.Name())
 	return nil
 }
 
