@@ -52,6 +52,7 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 	elapsed := time.Since(begin)
 	// 获取 SQL 语句和返回条数
 	sql, rows := fc()
+
 	// Gorm 错误时打印
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		log.Context(ctx).Errorf("SQL ERROR, | err=%v elapsed=%v, rows=%v, sql=%v ", err.Error(), elapsed, rows, sql)
@@ -60,4 +61,6 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 	if l.SlowThreshold != 0 && elapsed > l.SlowThreshold {
 		log.Context(ctx).Warnf("Database Slow Log, | elapsed=%v, rows=%v, sql=%v", elapsed, rows, sql)
 	}
+
+	log.Context(ctx).Infof("SQL Info, | elapsed=%v, rows=%v, sql=%v", elapsed, rows, sql)
 }
