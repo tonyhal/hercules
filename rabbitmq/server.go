@@ -129,7 +129,7 @@ func (s *Server) Start(ctx context.Context) error {
 			}
 			// 声明交换机
 			if err := s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv); err != nil {
-				fmt.Println("ExchangeDeclare:", err.Error())
+				fmt.Println("ExchangeDeclare:", exchangeType, consumer.Exchange, err.Error())
 			}
 			// 声明队列
 			s.channel[identity].QueueDeclare(consumer.Queue, true, false, false, false, amqp091.Table{"x-ha-policy": "all"})
