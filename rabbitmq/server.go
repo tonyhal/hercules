@@ -119,7 +119,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 		// 验证交换机类型
 		if !strings.Contains("|direct|fanout|headers|topic|x-delayed-message|", exchangeType) {
-			return fmt.Errorf("%v,RabbitMQ不存在该类型交换机", consumer.Exchange)
+			return fmt.Errorf("%v, RabbitMQ不存在该类型交换机", consumer.Exchange)
 		}
 
 		for i := 0; i < consumer.Fork; i++ {
@@ -128,7 +128,9 @@ func (s *Server) Start(ctx context.Context) error {
 				break
 			}
 			// 声明交换机
-			s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv)
+			if err := s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv); err != nil {
+				fmt.Println("ExchangeDeclare:", err.Error())
+			}
 			// 声明队列
 			s.channel[identity].QueueDeclare(consumer.Queue, true, false, false, false, amqp091.Table{"x-ha-policy": "all"})
 			// 绑定队列
@@ -160,6 +162,7 @@ func (s *Server) Start(ctx context.Context) error {
 				}
 			}(s.baseCtx, deliveries, consumer)
 		}
+
 	}
 	return s.err
 }
