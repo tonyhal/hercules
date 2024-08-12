@@ -105,6 +105,8 @@ func (s *Server) Start(ctx context.Context) error {
 	s.baseCtx, s.cancel = context.WithCancel(context.Background())
 	for _, consumer := range s.Consumers {
 
+		identity := utils.Md5(consumer.Identity)
+
 		// 声明交换机延时、以及延时交换机
 		argv := amqp091.Table{}
 		exchangeSplit := strings.Split(strings.Trim(consumer.Exchange, ""), ".")
@@ -119,7 +121,6 @@ func (s *Server) Start(ctx context.Context) error {
 		if !strings.Contains("|direct|fanout|headers|topic|x-delayed-message|", exchangeType) {
 			return fmt.Errorf("%v,RabbitMQ不存在该类型交换机", consumer.Exchange)
 		}
-		identity := utils.Md5(consumer.Identity)
 		s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv)
 
 		for i := 0; i < consumer.Fork; i++ {
