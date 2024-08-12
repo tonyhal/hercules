@@ -104,28 +104,29 @@ func (s *Server) Start(ctx context.Context) error {
 
 	s.baseCtx, s.cancel = context.WithCancel(context.Background())
 	for _, consumer := range s.Consumers {
+
+		// 声明交换机延时、以及延时交换机
+		argv := amqp091.Table{}
+		exchangeSplit := strings.Split(strings.Trim(consumer.Exchange, ""), ".")
+		exchangeType := strings.ToLower(exchangeSplit[len(exchangeSplit)-1])
+		// 延时队列处理
+		if strings.Contains(consumer.Exchange, "delayed") {
+			exchangeType = "x-delayed-message"
+			argv["x-delayed-type"] = "direct"
+		}
+
+		// 验证交换机类型
+		if !strings.Contains("|direct|fanout|headers|topic|x-delayed-message|", exchangeType) {
+			return fmt.Errorf("%v,RabbitMQ不存在该类型交换机", consumer.Exchange)
+		}
 		identity := utils.Md5(consumer.Identity)
+		s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv)
+
 		for i := 0; i < consumer.Fork; i++ {
 			// 获取通道
 			if s.channel[identity], s.err = s.conn[identity].Channel(); s.err != nil {
 				break
 			}
-			// 声明交换机延时、以及延时交换机
-			argv := amqp091.Table{}
-			exchangeSplit := strings.Split(strings.Trim(consumer.Exchange, ""), ".")
-			exchangeType := strings.ToLower(exchangeSplit[len(exchangeSplit)-1])
-			// 延时队列处理
-			if strings.Contains(consumer.Exchange, "delayed") {
-				exchangeType = "x-delayed-message"
-				argv["x-delayed-type"] = "direct"
-			}
-
-			// 验证交换机类型
-			if !strings.Contains("|direct|fanout|headers|topic|x-delayed-message|", exchangeType) {
-				return fmt.Errorf("%v,RabbitMQ不存在该类型交换机", consumer.Exchange)
-			}
-			s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv)
-
 			// 声明队列
 			s.channel[identity].QueueDeclare(consumer.Queue, true, false, false, false, amqp091.Table{"x-ha-policy": "all"})
 			// 绑定队列
