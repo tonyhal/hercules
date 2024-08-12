@@ -121,13 +121,14 @@ func (s *Server) Start(ctx context.Context) error {
 		if !strings.Contains("|direct|fanout|headers|topic|x-delayed-message|", exchangeType) {
 			return fmt.Errorf("%v,RabbitMQ不存在该类型交换机", consumer.Exchange)
 		}
-		s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv)
 
 		for i := 0; i < consumer.Fork; i++ {
 			// 获取通道
 			if s.channel[identity], s.err = s.conn[identity].Channel(); s.err != nil {
 				break
 			}
+			// 声明交换机
+			s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv)
 			// 声明队列
 			s.channel[identity].QueueDeclare(consumer.Queue, true, false, false, false, amqp091.Table{"x-ha-policy": "all"})
 			// 绑定队列
