@@ -115,7 +115,7 @@ func (s *Server) Start(ctx context.Context) error {
 			exchangeSplit := strings.Split(strings.Trim(consumer.Exchange, ""), ".")
 			exchangeType := strings.ToLower(exchangeSplit[len(exchangeSplit)-1])
 			// 延时队列处理
-			if exchangeType == "delayed" {
+			if strings.Contains(consumer.Exchange, "delayed") {
 				exchangeType = "x-delayed-message"
 				argv["x-delayed-type"] = "direct"
 			}
