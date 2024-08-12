@@ -2,10 +2,12 @@ package rabbitmq
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/rabbitmq/amqp091-go"
 	"github.com/tonyhal/hercules/utils"
+	"strings"
 	"sync"
 )
 
@@ -108,6 +110,22 @@ func (s *Server) Start(ctx context.Context) error {
 			if s.channel[identity], s.err = s.conn[identity].Channel(); s.err != nil {
 				break
 			}
+			// 声明交换机延时、以及延时交换机
+			argv := amqp091.Table{}
+			exchangeSplit := strings.Split(strings.Trim(consumer.Exchange, ""), ".")
+			exchangeType := strings.ToLower(exchangeSplit[len(exchangeSplit)-1])
+			// 延时队列处理
+			if exchangeType == "delayed" {
+				exchangeType = "x-delayed-message"
+				argv["x-delayed-type"] = "direct"
+			}
+
+			// 验证交换机类型
+			if !strings.Contains("|direct|fanout|headers|topic|x-delayed-message|", exchangeType) {
+				return fmt.Errorf("%v,RabbitMQ不存在该类型交换机", consumer.Exchange)
+			}
+			s.channel[identity].ExchangeDeclare(consumer.Exchange, exchangeType, true, false, false, false, argv)
+
 			// 声明队列
 			s.channel[identity].QueueDeclare(consumer.Queue, true, false, false, false, amqp091.Table{"x-ha-policy": "all"})
 			// 绑定队列
