@@ -160,7 +160,6 @@ func (s *Server) Start(ctx context.Context) error {
 				}
 			}(s.baseCtx, deliveries, consumer)
 		}
-
 	}
 	return s.err
 }

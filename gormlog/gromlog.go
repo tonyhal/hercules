@@ -21,6 +21,7 @@ type Interface interface {
 
 type GormLogger struct {
 	SlowThreshold time.Duration
+	LogLevel      logger.LogLevel
 }
 
 func NewGormLogger() *GormLogger {
@@ -31,8 +32,11 @@ func NewGormLogger() *GormLogger {
 
 var _ logger.Interface = (*GormLogger)(nil)
 
-func (l *GormLogger) LogMode(lev logger.LogLevel) logger.Interface {
-	return &GormLogger{}
+// LogMode log mode
+func (l *GormLogger) LogMode(level logger.LogLevel) logger.Interface {
+	newlogger := *l
+	newlogger.LogLevel = level
+	return &newlogger
 }
 
 func (l *GormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
@@ -62,5 +66,7 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 		log.Context(ctx).Warnf("Database Slow Log, | elapsed=%v, rows=%v, sql=%v", elapsed, rows, sql)
 	}
 
-	log.Context(ctx).Infof("SQL Info, | elapsed=%v, rows=%v, sql=%v", elapsed, rows, sql)
+	if l.LogLevel == logger.Info {
+		log.Context(ctx).Infof("SQL Info, | elapsed=%v, rows=%v, sql=%v", elapsed, rows, sql)
+	}
 }
