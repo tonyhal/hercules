@@ -80,7 +80,7 @@ func (c *Producer) Publish(body []byte, queue, exchange, expiration string) erro
 		MessageId:    utils.Md5(string(body)),
 		Timestamp:    time.Now(),
 	}
-	if len(expiration) > 0 && strings.Compare(exchange, "delayed") > 0 {
+	if len(expiration) > 0 && strings.Contains(exchange, "delayed") {
 		publishing.Headers = amqp091.Table{"x-delay": expiration}
 	}
 	if err := channel.Publish(
