@@ -11,23 +11,23 @@ const (
 )
 
 func LogDebug(args ...interface{}) {
-	_ = log.GetLogger().Log(log.LevelDebug, logKey, args)
+	_ = log.GetLogger().Log(log.LevelDebug, logKey, fmt.Sprint(args...))
 }
 
 func LogInfo(args ...interface{}) {
-	_ = log.GetLogger().Log(log.LevelInfo, logKey, args)
+	_ = log.GetLogger().Log(log.LevelInfo, logKey, fmt.Sprint(args...))
 }
 
 func LogWarn(args ...interface{}) {
-	_ = log.GetLogger().Log(log.LevelWarn, logKey, args)
+	_ = log.GetLogger().Log(log.LevelWarn, logKey, fmt.Sprint(args...))
 }
 
 func LogError(args ...interface{}) {
-	_ = log.GetLogger().Log(log.LevelError, logKey, args)
+	_ = log.GetLogger().Log(log.LevelError, logKey, fmt.Sprint(args...))
 }
 
 func LogFatal(args ...interface{}) {
-	_ = log.GetLogger().Log(log.LevelFatal, logKey, args)
+	_ = log.GetLogger().Log(log.LevelFatal, logKey, fmt.Sprint(args...))
 }
 
 func LogDebugf(format string, args ...interface{}) {
