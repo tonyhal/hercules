@@ -156,7 +156,6 @@ func (s *Server) Stop(_ context.Context) error {
 	defer log.Infof("[%s] server stopping.", s.Name())
 
 	s.master.Close()
-	s.cancel()
 	s.canal.Close()
 
 	return nil
