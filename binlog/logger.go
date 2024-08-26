@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	logKey = "binlog"
+	logKey = "msg"
 )
 
 func LogDebug(args ...interface{}) {
