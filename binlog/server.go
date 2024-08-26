@@ -78,12 +78,12 @@ func (s *Server) Run() error {
 	if err != nil {
 		return errors.Trace(err)
 	}
+
+	log.Infof("[%s] server starting. [%v]", s.Name(), s.master.GtidSet())
 	if err := s.canal.StartFromGTID(gtidSet); err != nil {
 
 		return errors.Trace(err)
 	}
-
-	log.Infof("[%s] server starting.", s.Name())
 
 	return nil
 }
