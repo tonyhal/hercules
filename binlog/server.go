@@ -12,7 +12,6 @@ import (
 	"reflect"
 	"regexp"
 	"sync"
-	"time"
 )
 
 var _ transport.Server = (*Server)(nil)
@@ -99,11 +98,11 @@ func (s *Server) syncLoop() {
 		case ch := <-s.syncCh:
 			switch v := ch.(type) {
 			case gtidSetSaver:
-				time.AfterFunc(5*time.Minute, func() {
-					if err := s.master.Save(v.GtidSet); err != nil {
-						log.Errorf("save sync position %v err %v, close sync.\n", v.GtidSet, err)
-					}
-				})
+				//time.AfterFunc(5*time.Minute, func() {
+				if err := s.master.Save(v.GtidSet); err != nil {
+					log.Errorf("save sync position %v err %v, close sync.\n", v.GtidSet, err)
+				}
+				//})
 			case bulkRequest:
 				go func(v bulkRequest) {
 					jobs <- v.Record
