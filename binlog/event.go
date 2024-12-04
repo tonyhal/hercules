@@ -7,14 +7,13 @@ import (
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"reflect"
+	"time"
 )
 
 var _ canal.EventHandler = (*event)(nil)
 
 type gtidSetSaver struct {
 	GtidSet string
-	Pos     uint32
-	Name    string
 }
 
 type bulkRequest struct {
@@ -57,6 +56,11 @@ func (e *event) OnRow(rowsEvent *canal.RowsEvent) error {
 }
 
 func (e *event) OnPosSynced(eventHeader *replication.EventHeader, pos mysql.Position, gtidSet mysql.GTIDSet, force bool) error {
-	e.srv.syncCh <- gtidSetSaver{GtidSet: gtidSet.String(), Pos: pos.Pos, Name: pos.Name}
+
+	// 延时5分钟
+	time.AfterFunc(5*time.Minute, func() {
+		e.srv.syncCh <- gtidSetSaver{GtidSet: gtidSet.String()}
+	})
+
 	return e.srv.ctx.Err()
 }
