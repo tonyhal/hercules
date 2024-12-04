@@ -58,9 +58,8 @@ func (e *event) OnRow(rowsEvent *canal.RowsEvent) error {
 func (e *event) OnPosSynced(eventHeader *replication.EventHeader, pos mysql.Position, gtidSet mysql.GTIDSet, force bool) error {
 
 	// 延时5分钟
-	time.AfterFunc(5*time.Minute, func() {
-		e.srv.syncCh <- gtidSetSaver{GtidSet: gtidSet.String()}
-	})
+	<-time.After(5 * time.Minute)
+	e.srv.syncCh <- gtidSetSaver{GtidSet: gtidSet.String()}
 
 	return e.srv.ctx.Err()
 }
