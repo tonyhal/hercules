@@ -58,7 +58,7 @@ func (s *Server) init(opts ...ServerOption) {
 
 func NewServer(opts ...ServerOption) *Server {
 	srv := new(Server)
-	srv.syncCh = make(chan interface{}, 128)
+	srv.syncCh = make(chan interface{}, 1024)
 	srv.handler = make(map[string]*handler)
 	srv.ctx, srv.cancel = context.WithCancel(context.Background())
 	srv.init(opts...)
