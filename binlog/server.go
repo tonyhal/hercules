@@ -151,7 +151,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 		log.Errorf("failed opening connection to binlog: %v", s.err)
 		return errors.Trace(err)
 	}
-	s.canal.SetEventHandler(&event{})
+	s.canal.SetEventHandler(&event{srv: s})
 	// 启动
 	return s.Run()
 }
