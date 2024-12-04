@@ -23,23 +23,8 @@ type bulkRequest struct {
 }
 
 type event struct {
+	canal.DummyEventHandler
 	srv *Server
-}
-
-func (e *event) OnRotate(eventHeader *replication.EventHeader, rotateEvent *replication.RotateEvent) error {
-	return nil
-}
-
-func (e *event) OnTableChanged(eventHeader *replication.EventHeader, schema string, table string) error {
-	return nil
-}
-
-func (e *event) OnDDL(eventHeader *replication.EventHeader, nextPos mysql.Position, queryEvent *replication.QueryEvent) error {
-	return nil
-}
-
-func (e *event) OnXID(eventHeader *replication.EventHeader, nextPos mysql.Position) error {
-	return nil
 }
 
 func (e *event) OnRow(rowsEvent *canal.RowsEvent) error {
@@ -49,7 +34,6 @@ func (e *event) OnRow(rowsEvent *canal.RowsEvent) error {
 		if rowsEvent.Action == canal.UpdateAction && k%2 == 0 {
 			continue
 		}
-
 		// 识别列对应值
 		values := make(map[string]interface{}, 0)
 		for _, column := range rowsEvent.Table.Columns {
@@ -70,19 +54,9 @@ func (e *event) OnRow(rowsEvent *canal.RowsEvent) error {
 	return e.srv.ctx.Err()
 }
 
-func (e *event) OnGTID(eventHeader *replication.EventHeader, gtidEvent mysql.BinlogGTIDEvent) error {
-	return nil
-}
-
 func (e *event) OnPosSynced(eventHeader *replication.EventHeader, pos mysql.Position, gtidSet mysql.GTIDSet, force bool) error {
+
 	e.srv.syncCh <- gtidSetSaver{gtidSet.String()}
+
 	return e.srv.ctx.Err()
-}
-
-func (e *event) OnRowsQueryEvent(rqe *replication.RowsQueryEvent) error {
-	return nil
-}
-
-func (e *event) String() string {
-	return "EventHandler"
 }
