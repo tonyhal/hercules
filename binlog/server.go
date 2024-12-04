@@ -58,7 +58,7 @@ func (s *Server) init(opts ...ServerOption) {
 
 func NewServer(opts ...ServerOption) *Server {
 	srv := new(Server)
-	srv.syncCh = make(chan interface{}, 128)
+	srv.syncCh = make(chan interface{}, 512)
 	srv.handler = make(map[string]*handler)
 	srv.ctx, srv.cancel = context.WithCancel(context.Background())
 	srv.init(opts...)
@@ -92,7 +92,7 @@ func (s *Server) Run() error {
 func (s *Server) syncLoop() {
 	defer s.wg.Done()
 
-	jobs := make(chan string, 512)
+	jobs := make(chan string, 256)
 	for {
 		select {
 		case ch := <-s.syncCh:
