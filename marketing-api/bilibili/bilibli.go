@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/golang-module/carbon/v2"
+	"github.com/dromara/carbon/v2"
 	"github.com/tonyhal/hercules/utils"
 	"io/ioutil"
 	"net/http"
