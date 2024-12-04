@@ -7,7 +7,6 @@ import (
 	"github.com/go-mysql-org/go-mysql/mysql"
 	"github.com/go-mysql-org/go-mysql/replication"
 	"reflect"
-	"time"
 )
 
 var _ canal.EventHandler = (*event)(nil)
@@ -58,7 +57,7 @@ func (e *event) OnRow(rowsEvent *canal.RowsEvent) error {
 func (e *event) OnPosSynced(eventHeader *replication.EventHeader, pos mysql.Position, gtidSet mysql.GTIDSet, force bool) error {
 
 	// 延时5分钟
-	<-time.After(5 * time.Minute)
+	//<-time.After(5 * time.Minute)
 	e.srv.syncCh <- gtidSetSaver{GtidSet: gtidSet.String()}
 
 	return e.srv.ctx.Err()
