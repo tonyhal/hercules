@@ -58,7 +58,7 @@ func (s *Server) init(opts ...ServerOption) {
 
 func NewServer(opts ...ServerOption) *Server {
 	srv := new(Server)
-	srv.syncCh = make(chan interface{}, 1024*8)
+	srv.syncCh = make(chan interface{}, 128)
 	srv.handler = make(map[string]*handler)
 	srv.ctx, srv.cancel = context.WithCancel(context.Background())
 	srv.init(opts...)
@@ -100,13 +100,13 @@ func (s *Server) syncLoop() {
 					log.Errorf("save sync position %v err %v, close sync.\n", v.GtidSet, err)
 				}
 			case bulkRequest:
-				go func(v bulkRequest) {
-					// 处理分表
-					table := regexp.MustCompile(`_\d{6}$`).ReplaceAllString(v.Table, "")
-					if h, ok := s.handler[table]; ok {
-						reflect.ValueOf(h.f).Call([]reflect.Value{reflect.ValueOf(v.Record), reflect.ValueOf(v.Action), reflect.ValueOf(v.Table), reflect.ValueOf(v.Values)})
-					}
-				}(v)
+				//go func(v bulkRequest) {
+				// 处理分表
+				table := regexp.MustCompile(`_\d{6}$`).ReplaceAllString(v.Table, "")
+				if h, ok := s.handler[table]; ok {
+					reflect.ValueOf(h.f).Call([]reflect.Value{reflect.ValueOf(v.Record), reflect.ValueOf(v.Action), reflect.ValueOf(v.Table), reflect.ValueOf(v.Values)})
+				}
+				//}(v)
 			}
 		case <-s.ctx.Done():
 			return

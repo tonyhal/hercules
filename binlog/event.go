@@ -77,7 +77,6 @@ func (e *event) OnGTID(eventHeader *replication.EventHeader, gtidEvent mysql.Bin
 func (e *event) OnPosSynced(eventHeader *replication.EventHeader, pos mysql.Position, gtidSet mysql.GTIDSet, force bool) error {
 	e.srv.syncCh <- gtidSetSaver{gtidSet.String()}
 	return e.srv.ctx.Err()
-
 }
 
 func (e *event) OnRowsQueryEvent(rqe *replication.RowsQueryEvent) error {
