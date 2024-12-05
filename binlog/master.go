@@ -50,7 +50,7 @@ func (m *master) Save(gtidSet string) error {
 		return nil
 	}
 	n := time.Now()
-	if n.Sub(m.lastSaveTime) < 3*time.Minute {
+	if n.Sub(m.lastSaveTime) < 2*time.Minute {
 		return nil
 	}
 
