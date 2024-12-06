@@ -105,7 +105,7 @@ func (s *Server) syncLoop() {
 				go func(v bulkRequest) {
 					jobs <- v.Record
 					// 处理分表
-					table := regexp.MustCompile(`_\d{6}$`).ReplaceAllString(v.Table, "")
+					table := regexp.MustCompile(`_\d{1,6}$`).ReplaceAllString(v.Table, "")
 					if h, ok := s.handler[table]; ok {
 						reflect.ValueOf(h.f).Call([]reflect.Value{reflect.ValueOf(v.Record), reflect.ValueOf(v.Action), reflect.ValueOf(v.Table), reflect.ValueOf(v.Values)})
 					}
