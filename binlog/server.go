@@ -107,7 +107,7 @@ func (s *Server) syncLoop() {
 					// 处理分表
 					table := regexp.MustCompile(`_\d{1,6}$`).ReplaceAllString(v.Table, "")
 					if h, ok := s.handler[table]; ok {
-						reflect.ValueOf(h.f).Call([]reflect.Value{reflect.ValueOf(v.Record), reflect.ValueOf(v.Action), reflect.ValueOf(v.Table), reflect.ValueOf(v.Values)})
+						reflect.ValueOf(h.f).Call([]reflect.Value{reflect.ValueOf(v.Record), reflect.ValueOf(v.Action), reflect.ValueOf(v.Schema), reflect.ValueOf(v.Table), reflect.ValueOf(v.Values)})
 					}
 					<-jobs
 				}(v)

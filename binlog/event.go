@@ -18,6 +18,7 @@ type gtidSetSaver struct {
 type bulkRequest struct {
 	Record string
 	Table  string
+	Schema string
 	Action string
 	Values string
 }
@@ -45,6 +46,7 @@ func (e *event) OnRow(rowsEvent *canal.RowsEvent) error {
 		valuesJson, _ := json.Marshal(values)
 		e.srv.syncCh <- bulkRequest{
 			Record: fmt.Sprintf("%v", reflect.ValueOf(v[0])),
+			Schema: rowsEvent.Table.Schema,
 			Table:  rowsEvent.Table.Name,
 			Action: rowsEvent.Action,
 			Values: string(valuesJson),
