@@ -25,23 +25,24 @@ func Md5(str string) string {
 }
 
 // post请求
-func JsonPost(url string, argv string) string {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Errorf("utils.JsonPost: %v", string(debug.Stack()))
-		}
-	}()
-
+func JsonPost(url string, argv string) (string, error) {
 	resp, err := http.Post(url, `application/json`, strings.NewReader(argv))
 	if err != nil {
-		return ``
+		return ``, err
 	}
 	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return ``
+		return ``, err
 	}
-	return string(body)
+
+	// 检查状态码
+	if resp.StatusCode == http.StatusNotFound { // 404 Not Found
+		return ``, fmt.Errorf("%v", strings.ReplaceAll(string(body), "\n", ""))
+	}
+
+	return string(body), nil
 }
 
 func HttpGet(url string, header map[string]string) (string, error) {
@@ -57,15 +58,22 @@ func HttpGet(url string, header map[string]string) (string, error) {
 		req.Header.Set(k, v)
 	}
 	resp, err := client.Do(req)
+
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return ``, err
 	}
+
+	// 检查状态码
+	if resp.StatusCode == http.StatusNotFound { // 404 Not Found
+		return ``, fmt.Errorf("%v", strings.ReplaceAll(string(body), "\n", ""))
+	}
+
 	return string(body), nil
 }
 
-func SendPost(urlStr string, argv map[string]interface{}) (string, string) {
+func SendPost(urlStr string, argv map[string]interface{}) (string, string, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Errorf("utils.SendPost: %v", string(debug.Stack()))
@@ -81,6 +89,7 @@ func SendPost(urlStr string, argv map[string]interface{}) (string, string) {
 
 	resp, err := client.Do(r)
 	if err != nil {
+		return "", "", err
 	}
 	defer resp.Body.Close()
 
@@ -91,13 +100,18 @@ func SendPost(urlStr string, argv map[string]interface{}) (string, string) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return ``, ``
+		return "", "", err
 	}
 
-	return string(body), strings.Join(cookies, ";")
+	// 检查状态码
+	if resp.StatusCode == http.StatusNotFound { // 404 Not Found
+		return "", ``, fmt.Errorf("%v", strings.ReplaceAll(string(body), "\n", ""))
+	}
+
+	return string(body), strings.Join(cookies, ";"), nil
 }
 
-func HttpPost(urlStr string, header map[string]string, argv map[string]string) string {
+func HttpPost(urlStr string, header map[string]string, argv map[string]string) (string, error) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Errorf("utils.HttpPost: %v", string(debug.Stack()))
@@ -118,15 +132,21 @@ func HttpPost(urlStr string, header map[string]string, argv map[string]string) s
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {
+		return ``, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return ``
+		return ``, err
 	}
 
-	return string(body)
+	// 检查状态码
+	if resp.StatusCode == http.StatusNotFound { // 404 Not Found
+		return ``, fmt.Errorf("%v", strings.ReplaceAll(string(body), "\n", ""))
+	}
+
+	return string(body), nil
 }
 
 func DateStringToUnixTimeStamp(date string) int64 {
